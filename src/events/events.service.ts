@@ -2,12 +2,13 @@ import { Repository } from 'typeorm';
 import { Get, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Event } from './entities/event.entity';
-
+import { Workshop } from './entities/workshop.entity';
 @Injectable()
 export class EventsService {
   constructor(
     @InjectRepository(Event)
     private eventRepository: Repository<Event>,
+    private workshopRepository: Repository<Workshop>,
   ) {}
 
   getWarmupEvents() {
@@ -92,69 +93,18 @@ export class EventsService {
 
   @Get('events')
   async getEventsWithWorkshops() {
-    return [
-      {
-        id: 1,
-        name: 'Laravel convention 2021',
-        createdAt: '2021-04-25T09:32:27.000000Z',
-        workshops: [
-          {
-            id: 1,
-            start: '2021-02-21 10:00:00',
-            end: '2021-02-21 16:00:00',
-            eventId: 1,
-            name: 'Illuminate your knowledge of the laravel code base',
-            createdAt: '2021-04-25T09:32:27.000000Z',
-          },
-        ],
-      },
-      {
-        id: 2,
-        name: 'Laravel convention 2023',
-        createdAt: '2023-04-25T09:32:27.000000Z',
-        workshops: [
-          {
-            id: 2,
-            start: '2023-10-21 10:00:00',
-            end: '2023-10-21 18:00:00',
-            eventId: 2,
-            name: 'The new Eloquent - load more with less',
-            createdAt: '2021-04-25T09:32:27.000000Z',
-          },
-          {
-            id: 3,
-            start: '2023-11-21 09:00:00',
-            end: '2023-11-21 17:00:00',
-            eventId: 2,
-            name: 'AutoEx - handles exceptions 100% automatic',
-            createdAt: '2021-04-25T09:32:27.000000Z',
-          },
-        ],
-      },
-      {
-        id: 3,
-        name: 'React convention 2023',
-        createdAt: '2023-04-25T09:32:27.000000Z',
-        workshops: [
-          {
-            id: 4,
-            start: '2023-08-21 10:00:00',
-            end: '2023-08-21 18:00:00',
-            eventId: 3,
-            name: '#NoClass pure functional programming',
-            createdAt: '2021-04-25T09:32:27.000000Z',
-          },
-          {
-            id: 5,
-            start: '2023-08-21 09:00:00',
-            end: '2023-08-21 17:00:00',
-            eventId: 3,
-            name: 'Navigating the function jungle',
-            createdAt: '2021-04-25T09:32:27.000000Z',
-          },
-        ],
-      },
-    ];
+    const events = await this.eventRepository.query('select * from event');
+
+    const result = events.map(async (event: any) => {
+      const workshop = await this.workshopRepository.query(
+        `select * from workshop where eventId = ${event.id}`,
+      );
+      return (event.workshop = workshop);
+    });
+
+    console.log(result);
+
+    return result;
   }
 
   /*
